@@ -1,0 +1,113 @@
+# Flow specification version
+version: "0.1.0"
+
+# Flow metadata and configuration
+metadata:
+  flow_type: "compound"
+  name: "relationship-baba"
+  description: "This flow processes three inputs and generates outputs based on concatenated strings."
+  author: "rootp1"
+  tags: ["relationship", "advice", "outputs"]
+  private: true
+
+# Primary input definitions
+inputs:
+  gender:
+    type: string
+    description: "boy or girl."
+    required: true
+    example: "sdfgh"
+  situation:
+    type: string
+    description: "relationship or breakup."
+    required: true
+    example: "sdfgh"
+  input_me:
+    type: string
+    description: "Give the detailed description of your situation"
+    required: true
+    example: "sdfgh"
+  input_other:
+    type: string
+    description: "Give the detailed description of partner's situation.."
+    required: true
+    example: "sdfgh"
+# Workflow definition
+workflow:
+  # Concatenating inputs to create a combined input for 3 different prompts
+  strengths:
+    type: "custom"
+    inputs:
+      combined_input1: "I am a ${inputs.gender} and I am about to get into ${inputs.situation} situation, and the situation of me is, ..${inputs.input_me}.. and situation of my partner is, ..${inputs.other}... Now generate the strengths of our situations to get into a ${inputs.situation}"
+    model:
+      provider: "openai"
+      name: "gpt-4o"
+    prompt: |
+      "{combined_input1}"
+
+  # Generating the second output based on the combined input and a second prompt
+  chall_ap:
+    type: "custom"
+    inputs:
+      combined_input2: "I am a ${inputs.gender} and I am about to get into ${inputs.situation} situation, and the situation of me is, ..${inputs.input_me}.. and situation of my partner is, ..${inputs.other}... At present what are the challenges with respect to our situations to get into a ${inputs.situation}?"
+    model:
+      provider: "openai"
+      name: "gpt-4o"
+    prompt: |
+      "This is a final input{combined_input2}"
+
+  # Generating the third output based on the combined input and a third prompt
+  chall_if:
+    type: "custom"
+    inputs:
+      combined_input3: "I am a ${inputs.gender} and I am about to get into ${inputs.situation} situation, and the situation of me is, ..${inputs.input_me}.. and situation of my partner is, ..${inputs.other}...  what are the challenges with respect to our situations to get into a ${inputs.situation} which might come in future?"
+    model:
+      provider: "openai"
+      name: "gpt-4o"
+    prompt: |
+      "This is a final input{combined_input3}""
+
+  # Concatenate the 3 outputs from previous flows and generate a new output
+  compatability:
+    type: "custom"
+    depends_on: [strengths, chall_ap, chall_if]
+    inputs:
+      combined_outputs: " My relationship is found to have these strengths: ${strengths.output}, the challenges at present: ${chall_ap.output} and these challenges in future: ${chall_if.output}, now give me a description for our compatability."
+    model:
+      provider: "openai"
+      name: "gpt-4o"
+    prompt: |
+      "This is a final input {combined_outputs}""
+
+  # Final output generation using the output from compatability and a final prompt
+  advice:
+    type: "custom"
+    depends_on: [compatability]
+    inputs:
+      final_input: " from the compatability of my relationship: ${compatability.output}, give me a final advice for me to, continue the process to get into a ${inputs.situation}"
+    model:
+      provider: "openai"
+      name: "gpt-4o"
+    prompt: |
+      "This is a final input{final_input}"
+
+# Output configuration
+output:
+  value:
+    - ${strengths.output}
+    - ${chall_ap.output}
+    - ${chall_if.output}
+    - ${compatability.output}
+    - ${advice.output}
+
+# Flow documentation
+readme: |
+  ### Workflow Overview:
+  1. *First Flow*: Concatenates the three inputs and generates output 1 based on the combined string.
+  2. *Second Flow*: Concatenates the three inputs and generates output 2 based on the combined string.
+  3. *Third Flow*: Concatenates the three inputs and generates output 3 based on the combined string.
+  4. *Fourth Flow*: Combines the outputs from the first, second, and third flows, then generates a new output based on the concatenated results.
+  5. *Fifth Flow*: Uses the output from the fourth flow to generate a final output.
+
+  ### Outputs:
+  - The final output consists of all the outputs from the individual flows.
